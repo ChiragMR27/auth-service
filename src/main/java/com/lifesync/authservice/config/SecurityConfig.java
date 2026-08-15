@@ -36,7 +36,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable explicit CORS handling
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/register", "/api/auth/login").permitAll() // Open endpoints to public
+                // ADDED /api/auth/send-otp to the permitAll list!
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/send-otp").permitAll() 
                 .anyRequest().authenticated() // Everything else requires token authentication
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
