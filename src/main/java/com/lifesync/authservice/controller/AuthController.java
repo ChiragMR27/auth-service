@@ -25,7 +25,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService; // Use the custom EmailService instead of JavaMailSender
+    private final EmailService emailService; 
 
     private final Map<String, String> otpStorage = new ConcurrentHashMap<>();
 
