@@ -15,9 +15,12 @@ public class AppUser {
     @Column(unique = true, nullable = false)
     private String username;
 
+    // NEW: Stores the user's email natively in the database!
+    @Column(unique = true)
+    private String email;
+
     @Column(nullable = false)
     private String password;
 
-    // This will help us control access (e.g., "ROLE_ADMIN", "ROLE_USER")
     private String role; 
 }

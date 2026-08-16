@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,10 +52,8 @@ public class AuthController {
         String otp = String.format("%04d", new Random().nextInt(10000));
         otpStorage.put(email, otp);
 
-        // This method call returns instantly while the email sends in the background
         emailService.sendOtpEmail(email, otp);
 
-        // Immediately respond to React so the UI updates instantly
         return ResponseEntity.ok("OTP sending initiated for " + email);
     }
 
@@ -72,6 +71,7 @@ public class AuthController {
 
         AppUser user = new AppUser();
         user.setUsername(username);
+        user.setEmail(email); 
         user.setPassword(passwordEncoder.encode(password));
         user.setRole("USER"); 
 
@@ -81,6 +81,34 @@ public class AuthController {
         return ResponseEntity.ok("User registered successfully");
     }
 
+    // NEW: The Admin Bypass Endpoint! No OTP required.
+    @PostMapping("/direct-register")
+    public ResponseEntity<String> directRegisterUser(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        String email = request.get("email");
+        String password = request.get("password");
+        String role = request.get("role");
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            return ResponseEntity.badRequest().body("Username is already taken!");
+        }
+        if (email != null && userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.badRequest().body("Email is already registered!");
+        }
+
+        AppUser user = new AppUser();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        
+        // Defaults to USER if no role is provided
+        user.setRole(role != null && !role.trim().isEmpty() ? role : "USER"); 
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok("User created successfully via Admin Panel!");
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> loginUser(@RequestBody AuthRequest request) {
         authenticationManager.authenticate(
@@ -88,5 +116,40 @@ public class AuthController {
         );
         String token = jwtUtil.generateToken(request.getUsername());
         return ResponseEntity.ok(new AuthResponse(token));
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<String> updateUserProfile(@RequestBody Map<String, String> request) {
+        String currentIdentifier = request.get("currentUsername");
+        String newIdentifier = request.get("newUsername");
+        String newPassword = request.get("newPassword");
+
+        Optional<AppUser> optionalUser = userRepository.findByUsername(currentIdentifier);
+        if (optionalUser.isEmpty()) {
+            optionalUser = userRepository.findByEmail(currentIdentifier);
+        }
+
+        return optionalUser.map(user -> {
+            if (newIdentifier != null && !newIdentifier.trim().isEmpty()) {
+                if (newIdentifier.contains("@")) {
+                    if (!newIdentifier.equals(user.getEmail()) && userRepository.findByEmail(newIdentifier).isPresent()) {
+                        return ResponseEntity.badRequest().body("That email is already in use!");
+                    }
+                    user.setEmail(newIdentifier);
+                } else {
+                    if (!newIdentifier.equals(user.getUsername()) && userRepository.findByUsername(newIdentifier).isPresent()) {
+                        return ResponseEntity.badRequest().body("That username is already taken!");
+                    }
+                    user.setUsername(newIdentifier);
+                }
+            }
+            
+            if (newPassword != null && !newPassword.trim().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(newPassword));
+            }
+            
+            userRepository.save(user);
+            return ResponseEntity.ok("Profile updated successfully");
+        }).orElse(ResponseEntity.badRequest().body("User not found in database. Try logging in again!"));
     }
 }
