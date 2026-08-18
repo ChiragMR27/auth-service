@@ -1,14 +1,13 @@
 package com.lifesync.authservice.controller;
 
+import com.lifesync.authservice.model.AppUser;
 import com.lifesync.authservice.model.Message;
 import com.lifesync.authservice.repository.MessageRepository;
+import com.lifesync.authservice.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,9 +17,11 @@ import java.util.stream.Stream;
 public class ChatController {
 
     private final MessageRepository messageRepository;
+    private final UserRepository userRepository; // THE FIX: Added UserRepository!
 
-    public ChatController(MessageRepository messageRepository) {
+    public ChatController(MessageRepository messageRepository, UserRepository userRepository) {
         this.messageRepository = messageRepository;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/send")
@@ -41,21 +42,36 @@ public class ChatController {
         return ResponseEntity.ok(history);
     }
 
-    // THE FIX: New endpoint that returns a list of unique people who have messaged this user
+    // THE FIX: Now returns a list of objects containing BOTH the email and the username!
     @GetMapping("/recent")
-    public ResponseEntity<Set<String>> getRecentChats(@RequestParam String email) {
+    public ResponseEntity<List<Map<String, String>>> getRecentChats(@RequestParam String email) {
         List<Message> allMessages = messageRepository.findBySenderEmailOrReceiverEmail(email, email);
-        Set<String> contacts = new HashSet<>();
+        Set<String> uniqueEmails = new HashSet<>();
 
         for (Message msg : allMessages) {
             if (!msg.getSenderEmail().equals(email)) {
-                contacts.add(msg.getSenderEmail());
+                uniqueEmails.add(msg.getSenderEmail());
             }
             if (!msg.getReceiverEmail().equals(email)) {
-                contacts.add(msg.getReceiverEmail());
+                uniqueEmails.add(msg.getReceiverEmail());
             }
         }
 
-        return ResponseEntity.ok(contacts);
+        List<Map<String, String>> recentChats = new ArrayList<>();
+        for (String contactEmail : uniqueEmails) {
+            Map<String, String> contactInfo = new HashMap<>();
+            contactInfo.put("email", contactEmail);
+            
+            // Database Lookup: Get the username!
+            Optional<AppUser> userOpt = userRepository.findByEmail(contactEmail);
+            if (userOpt.isPresent()) {
+                contactInfo.put("username", userOpt.get().getUsername());
+            } else {
+                contactInfo.put("username", contactEmail.split("@")[0]); // Fallback
+            }
+            recentChats.add(contactInfo);
+        }
+
+        return ResponseEntity.ok(recentChats);
     }
 }
