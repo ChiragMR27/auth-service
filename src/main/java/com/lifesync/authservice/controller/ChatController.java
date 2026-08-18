@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
-@RequestMapping("/api/chat")
+// THE FIX: Added /auth to match React's authApi base URL exactly
+@RequestMapping("/api/auth/chat")
 @CrossOrigin(origins = "*")
 public class ChatController {
 
