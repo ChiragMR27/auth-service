@@ -7,5 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class AuthResponse {
     private String token;
-    private String username; // NEW: Tell React exactly who logged in!
+    private String email; 
 }

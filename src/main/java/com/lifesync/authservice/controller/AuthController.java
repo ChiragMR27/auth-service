@@ -114,10 +114,15 @@ public class AuthController {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
-        String token = jwtUtil.generateToken(request.getUsername());
         
         
-        return ResponseEntity.ok(new AuthResponse(token, request.getUsername()));
+        AppUser user = userRepository.findByUsername(request.getUsername())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+            
+        String token = jwtUtil.generateToken(user.getUsername());
+        
+       
+        return ResponseEntity.ok(new AuthResponse(token, user.getEmail()));
     }
 
     @PutMapping("/update")
