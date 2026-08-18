@@ -36,8 +36,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
             .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth
-                // THE FIX: Added /api/auth/direct-register to the VIP list so the Admin panel works!
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/send-otp", "/api/auth/update", "/api/auth/direct-register").permitAll() 
+                // THE FIX: Added /api/chat/** to the VIP list so messages can be saved and fetched!
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/send-otp", "/api/auth/update", "/api/auth/direct-register", "/api/auth/check-email", "/api/chat/**").permitAll() 
                 .anyRequest().authenticated() 
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

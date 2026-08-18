@@ -81,7 +81,6 @@ public class AuthController {
         return ResponseEntity.ok("User registered successfully");
     }
 
-    // NEW: The Admin Bypass Endpoint! No OTP required.
     @PostMapping("/direct-register")
     public ResponseEntity<String> directRegisterUser(@RequestBody Map<String, String> request) {
         String username = request.get("username");
@@ -101,7 +100,6 @@ public class AuthController {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         
-        // Defaults to USER if no role is provided
         user.setRole(role != null && !role.trim().isEmpty() ? role : "USER"); 
 
         userRepository.save(user);
@@ -158,5 +156,12 @@ public class AuthController {
             userRepository.save(user);
             return ResponseEntity.ok("Profile updated successfully");
         }).orElse(ResponseEntity.badRequest().body("User not found in database. Try logging in again!"));
+    }
+
+    // NEW: Check if a user exists before adding them to a group
+    @GetMapping("/check-email")
+    public ResponseEntity<Boolean> checkEmailExists(@RequestParam String email) {
+        boolean exists = userRepository.findByEmail(email).isPresent() || userRepository.findByUsername(email).isPresent();
+        return ResponseEntity.ok(exists);
     }
 }
