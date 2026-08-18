@@ -115,7 +115,9 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
         String token = jwtUtil.generateToken(request.getUsername());
-        return ResponseEntity.ok(new AuthResponse(token));
+        
+        
+        return ResponseEntity.ok(new AuthResponse(token, request.getUsername()));
     }
 
     @PutMapping("/update")
