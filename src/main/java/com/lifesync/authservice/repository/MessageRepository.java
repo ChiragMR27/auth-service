@@ -10,4 +10,7 @@ import java.util.List;
 public interface MessageRepository extends JpaRepository<Message, Long> {
     // Quickly grabs messages sent from Person A to Person B
     List<Message> findBySenderEmailAndReceiverEmail(String senderEmail, String receiverEmail);
+    
+    // NEW: Grabs all messages involving a specific user to build the "Recent Chats" list
+    List<Message> findBySenderEmailOrReceiverEmail(String senderEmail, String receiverEmail);
 }
