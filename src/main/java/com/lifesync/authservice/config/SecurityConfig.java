@@ -36,8 +36,17 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
             .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth
-                // THE FIX: Changed to /api/auth/chat/** so the firewall allows the exact URL React is using
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/send-otp", "/api/auth/update", "/api/auth/direct-register", "/api/auth/check-email", "/api/auth/chat/**").permitAll() 
+                // THE FIX: Added /api/auth/get-usernames to the VIP permit list
+                .requestMatchers(
+                    "/api/auth/register", 
+                    "/api/auth/login", 
+                    "/api/auth/send-otp", 
+                    "/api/auth/update", 
+                    "/api/auth/direct-register", 
+                    "/api/auth/check-email", 
+                    "/api/auth/get-usernames", 
+                    "/api/auth/chat/**"
+                ).permitAll() 
                 .anyRequest().authenticated() 
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

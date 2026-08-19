@@ -12,6 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -158,10 +160,19 @@ public class AuthController {
         }).orElse(ResponseEntity.badRequest().body("User not found in database. Try logging in again!"));
     }
 
-    // NEW: Check if a user exists before adding them to a group
     @GetMapping("/check-email")
     public ResponseEntity<Boolean> checkEmailExists(@RequestParam String email) {
         boolean exists = userRepository.findByEmail(email).isPresent() || userRepository.findByUsername(email).isPresent();
         return ResponseEntity.ok(exists);
+    }
+
+    // THE FIX: New endpoint to fetch real usernames for the member modal
+    @PostMapping("/get-usernames")
+    public ResponseEntity<Map<String, String>> getUsernames(@RequestBody List<String> emails) {
+        Map<String, String> emailToUsername = new HashMap<>();
+        for (String email : emails) {
+            userRepository.findByEmail(email).ifPresent(user -> emailToUsername.put(email, user.getUsername()));
+        }
+        return ResponseEntity.ok(emailToUsername);
     }
 }
